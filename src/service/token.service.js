@@ -6,7 +6,8 @@ export const createToken = (userData) => {
     
     const payload = { 
         id: userData._id, 
-        correo: userData.correo 
+        correo: userData.correo ,
+        role: userData.role
     };
     return jwt.sign(payload, secret, { expiresIn: '1h' });
 };
