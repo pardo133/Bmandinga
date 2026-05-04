@@ -3,10 +3,15 @@ import jwt from 'jsonwebtoken';
 const secret = process.env.JWT_SECRET || 'mi_clave_secreta_123';
 
 export const createToken = (userData) => {
-    return jwt.sign(userData, secret, { expiresIn: '1h' });
+    
+    const payload = { 
+        id: userData._id, 
+        correo: userData.correo 
+    };
+    return jwt.sign(payload, secret, { expiresIn: '1h' });
 };
 
-// Nueva función para verificar si el token es real y no ha expirado
+
 export const validateToken = (token) => {
     try {
         return jwt.verify(token, secret);
