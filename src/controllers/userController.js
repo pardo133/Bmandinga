@@ -11,6 +11,12 @@ export const loginController = async (req, res) => {
 };
 
 export const userInfoController = async (req, res) => {
-    const result = await userService.userInfoService(req.user);
-    res.status(result.status).json(result);
+    try {
+       
+        const result = await userService.userInfoService(req.user);
+        res.status(result.status).json(result);
+    } catch (error) {
+        res.status(500).json({ mensaje: "Error en el controlador de usuario" });
+    }
 };
+

@@ -19,28 +19,41 @@ export const registerUser = async (userData) => {
 
 export const loginService = async ({ correo, password }) => {
     try {
-        // 1. Buscar al usuario por correo
+        
         const userFound = await User.findOne({ correo });
         if (!userFound) {
             return { status: 404, message: "Usuario no encontrado" };
         }
 
-        // 2. Comparar la contraseña ingresada con la de la DB (userFound.password)
+       
         const isMatch = await bcrypt.compare(password, userFound.password);
         if (!isMatch) {
             return { status: 401, message: "Contraseña incorrecta" };
         }
 
-        // 3. Generar el token si todo es correcto
+        
         const token = createToken(userFound.toObject());
         return { status: 200, token };
 
     } catch (error) {
-        console.error(error); // Esto te ayudará a ver errores reales en la consola
+        console.error(error); 
         return { status: 500, message: "Error en el login" };
     }
 };
 
-export const userInfoService = async (user) => {
-    return { status: 200, user };
+export const userInfoService = async (userData) => {
+    try {
+       
+        return { 
+            status: 200, 
+            user: {
+                id: userData.id,
+                nombre: userData.nombre,
+                correo: userData.correo,
+                role: userData.role
+            }
+        };
+    } catch (error) {
+        return { status: 500, mensaje: "Error en el servicio de información" };
+    }
 };

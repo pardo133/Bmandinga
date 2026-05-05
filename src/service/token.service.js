@@ -6,6 +6,7 @@ export const createToken = (userData) => {
     
     const payload = { 
         id: userData._id, 
+        nombre: userData.nombre,
         correo: userData.correo ,
         role: userData.role
     };
