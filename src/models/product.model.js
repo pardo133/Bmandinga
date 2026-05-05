@@ -7,4 +7,4 @@ const productSchema = new mongoose.Schema({
   stock: { type: Number, default: 0 }
 });
 
-export default mongoose.model("Product", productSchema, 'product');
+export default mongoose.model('product', productSchema, 'products');
