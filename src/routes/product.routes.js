@@ -1,11 +1,12 @@
 import express from "express";
 import { getProducts, createProduct } from "../controllers/productController.js";
 import { authMiddleware } from "../middlewares/user.middleware.js";
-
+import { totalcarrito } from "../controllers/cart.controllers.js";
 const router = express.Router();
 
 
 router.get("/", getProducts);
+router.post("/carrito", totalcarrito);
 
 
 router.post("/create", authMiddleware, (req, res, next) => {
