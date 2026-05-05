@@ -12,9 +12,10 @@ export const registerUser = async (userData) => {
         await nuevoUsuario.save();
         
         return { status: 201, message: "Usuario guardado" };
-    } catch (e) {
-        return { status: 409, message: "Error al guardar usuario" };
-    }
+   } catch (e) {
+    console.log("ERROR REAL:", e); 
+    return { status: 500, message: e.message }; 
+}
 };
 
 export const loginService = async ({ correo, password }) => {

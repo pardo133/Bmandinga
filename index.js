@@ -8,14 +8,14 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 connectDB();
-
+  app.use(cors());
 app.use(express.json());
 app.use('/api/users', userRoutes);
 app.use("/api/products", productRoutes);
 app.use('/api/payments', paymentRoutes);
 
 
-    app.use(cors());
+  
 
 app.listen(PORT, () => {
     console.log(`🚀 Servidor en http://localhost:${PORT}`);
