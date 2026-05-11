@@ -1,22 +1,21 @@
 import * as userService from '../service/userService.js';
 
 export const register = async (req, res) => {
-    const result = await userService.registerUser(req.body);
-    res.status(result.status).json(result);
+    const { status, ...body } = await userService.registerUser(req.body);
+    res.status(status).json(body);
 };
 
 export const loginController = async (req, res) => {
-    const result = await userService.loginService(req.body);
-    res.status(result.status).json(result);
+    const { status, ...body } = await userService.loginService(req.body);
+    res.status(status).json(body);
 };
 
 export const userInfoController = async (req, res) => {
-    try {
-       
-        const result = await userService.userInfoService(req.user);
-        res.status(result.status).json(result);
-    } catch (error) {
-        res.status(500).json({ mensaje: "Error en el controlador de usuario" });
-    }
+    const { status, ...body } = await userService.userInfoService(req.user);
+    res.status(status).json(body);
 };
 
+export const updateProfileController = async (req, res) => {
+    const { status, ...body } = await userService.updateProfile(req.user.id, req.body);
+    res.status(status).json(body);
+};
