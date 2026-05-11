@@ -4,7 +4,6 @@ import { createCheckoutSession, retrieveSessionStatus } from '../services/paymen
 import type { CheckoutItem, WebhookOrderData, OrderProduct } from '../types/payment.types.js';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
-const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET as string;
 
 // ─── Checkout session ─────────────────────────────────────────────────────────
 
@@ -50,7 +49,6 @@ export async function createCheckoutSessionHandler(
 
 // ─── Session status ───────────────────────────────────────────────────────────
 
-/** GET /api/checkout/session-status?session_id=cs_xxx */
 export async function getSessionStatusHandler(
   req: Request,
   res: Response
@@ -71,16 +69,25 @@ export async function getSessionStatusHandler(
   }
 }
 
-// ─── Webhook ──────────────────────────────────────────────────────────────────
+// ─── Webhook real (Stripe → CLI → servidor) ───────────────────────────────────
 
-/**
- * Registrado en index.js ANTES de express.json() con express.raw({ type: 'application/json' })
- * para preservar el body en crudo que Stripe necesita para verificar la firma.
- */
 export async function webhookHandler(req: Request, res: Response): Promise<void> {
-  const sig = req.headers['stripe-signature'];
+  // Este log aparece SIEMPRE si el endpoint es alcanzado
+  console.log('\n🔔 [WEBHOOK] Petición recibida:', new Date().toISOString());
+
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+  if (!webhookSecret) {
+    console.error('❌ [WEBHOOK] STRIPE_WEBHOOK_SECRET no está definido en .env');
+    res.status(500).json({ message: 'Configuración de webhook incompleta en el servidor' });
+    return;
+  }
+
+  const rawSig = req.headers['stripe-signature'];
+  const sig = Array.isArray(rawSig) ? rawSig[0] : rawSig;
 
   if (!sig) {
+    console.error('❌ [WEBHOOK] Falta la cabecera stripe-signature');
     res.status(400).json({ message: 'Falta la cabecera stripe-signature' });
     return;
   }
@@ -90,26 +97,57 @@ export async function webhookHandler(req: Request, res: Response): Promise<void>
     event = stripe.webhooks.constructEvent(req.body as Buffer, sig, webhookSecret);
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Error de firma';
-    console.error('Webhook: verificación de firma fallida:', message);
+    console.error('❌ [WEBHOOK] Firma inválida:', message);
     res.status(400).json({ message: `Webhook error: ${message}` });
     return;
   }
 
-  switch (event.type) {
-    case 'checkout.session.completed':
-      await handleCheckoutCompleted(event.data.object as Stripe.Checkout.Session);
-      break;
-    default:
-      console.log(`Evento de Stripe no manejado: ${event.type}`);
+  console.log('✅ [WEBHOOK] Evento verificado:', event.type);
+
+  if (event.type === 'checkout.session.completed') {
+    await handleCheckoutCompleted(event.data.object as Stripe.Checkout.Session);
   }
 
   res.status(200).json({ received: true });
 }
 
-// ─── Lógica de negocio del webhook ───────────────────────────────────────────
+// ─── Simulación de pago (sandbox) ─────────────────────────────────────────────
+// POST /api/checkout/simulate-payment
+// Dispara la misma lógica que el webhook real sin necesitar la Stripe CLI.
+
+export async function simulatePaymentHandler(
+  req: Request,
+  res: Response
+): Promise<void> {
+  const userId = req.user?.id ?? 'usuario-simulado';
+  const { items = [], total = 9.99 } = req.body as {
+    items?: Array<{ id: string | number; quantity: number }>;
+    total?: number;
+  };
+
+  const mockSession: Partial<Stripe.Checkout.Session> = {
+    id: `cs_test_simulado_${Date.now()}`,
+    client_reference_id: userId,
+    amount_total: Math.round(total * 100),
+    metadata: {
+      products: items.map((i) => `${i.id}:${i.quantity}`).join(','),
+    },
+    customer_details: { email: 'test@sandbox.local' } as Stripe.Checkout.Session['customer_details'],
+  };
+
+  await handleCheckoutCompleted(mockSession as Stripe.Checkout.Session);
+
+  res.status(200).json({
+    message: 'Pago simulado procesado. Revisa la consola del servidor.',
+    sessionId: mockSession.id,
+  });
+}
+
+// ─── Lógica de negocio compartida ────────────────────────────────────────────
 
 async function handleCheckoutCompleted(session: Stripe.Checkout.Session): Promise<void> {
   const userId = session.client_reference_id ?? 'unknown';
+  const email  = session.customer_details?.email ?? 'sin email';
 
   const productsRaw = session.metadata?.products ?? '';
   const products: OrderProduct[] = productsRaw
@@ -127,10 +165,16 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session): Promis
     total: (session.amount_total ?? 0) / 100,
   };
 
-  // ── SIMULACIÓN — reemplazar por lógica real de DB ────────────────────────────
-  //   await Order.create({ ...orderData, status: 'completed', createdAt: new Date() });
-  //   await Cart.deleteOne({ userId });
-  // ─────────────────────────────────────────────────────────────────────────────
-  console.log('✅ Pago confirmado. Orden simulada:', JSON.stringify(orderData, null, 2));
-  console.log(`🛒 Carrito simulado limpiado para usuario: ${userId}`);
+  console.log('\n========================================');
+  console.log('✅  PAGO CONFIRMADO');
+  console.log('========================================');
+  console.log(`👤 Usuario  : ${userId}`);
+  console.log(`📧 Email    : ${email}`);
+  console.log(`💶 Total    : ${orderData.total.toFixed(2)} €`);
+  console.log(`🛒 Productos: ${JSON.stringify(products)}`);
+  console.log('========================================\n');
+
+  // Aquí irá la lógica real cuando tengáis el modelo Order:
+  // await Order.create({ ...orderData, status: 'completed', createdAt: new Date() });
+  // await Cart.deleteOne({ userId });
 }

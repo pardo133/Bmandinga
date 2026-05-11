@@ -1,3 +1,4 @@
+import 'dotenv/config'; // debe ser el primer import para que los demás módulos lean process.env
 import express from 'express';
 import cors from 'cors';
 import { connectDB } from './src/config/db.js';
