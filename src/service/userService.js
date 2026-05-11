@@ -67,6 +67,18 @@ export const userInfoService = async (userData) => {
     }
 };
 
+/** Emite un nuevo JWT para el usuario identificado por su id (extraído del token actual). */
+export const refreshTokenService = async (userId) => {
+    try {
+        const userFound = await User.findById(userId);
+        if (!userFound) return { status: 404, message: 'Usuario no encontrado' };
+        const token = createToken(userFound.toObject());
+        return { status: 200, token };
+    } catch {
+        return { status: 500, message: 'Error al renovar el token' };
+    }
+};
+
 /** Actualiza los campos de perfil del usuario. El correo nunca se puede cambiar. */
 export const updateProfile = async (userId, updateData) => {
     try {

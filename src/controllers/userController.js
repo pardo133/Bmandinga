@@ -19,3 +19,8 @@ export const updateProfileController = async (req, res) => {
     const { status, ...body } = await userService.updateProfile(req.user.id, req.body);
     res.status(status).json(body);
 };
+
+export const refreshTokenController = async (req, res) => {
+    const { status, ...body } = await userService.refreshTokenService(req.user.id);
+    res.status(status).json(body);
+};

@@ -10,7 +10,7 @@ export const createToken = (userData) => {
         correo: userData.correo ,
         role: userData.role
     };
-    return jwt.sign(payload, secret, { expiresIn: '1h' });
+    return jwt.sign(payload, secret, { expiresIn: '2h' });
 };
 
 
