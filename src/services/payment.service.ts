@@ -20,14 +20,14 @@ export async function createCheckoutSession(
   const lineItems = items.map((i) => ({
     price_data: {
       currency: 'eur',
-      product_data: { name: i.nombre },
-      unit_amount: Math.round(i.precio * 100), // Stripe trabaja en céntimos
+      product_data: { name: `${i.nombre} (Talla ${i.talla})` },
+      unit_amount: Math.round(i.precio * 100),
     },
     quantity: i.cantidad,
   }));
 
-  // Serializar items en metadata para recuperarlos en el webhook: "id:cantidad,..."
-  const productsMetadata = items.map((i) => `${i.id}:${i.cantidad}`).join(',');
+  // Serializar items en metadata: "id:cantidad:talla,..."
+  const productsMetadata = items.map((i) => `${i.id}:${i.cantidad}:${i.talla}`).join(',');
 
   const session = await stripe.checkout.sessions.create({
     payment_method_types: ['card'],

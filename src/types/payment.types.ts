@@ -4,6 +4,7 @@ export interface CheckoutItem {
   nombre: string;
   precio: number;   // precio del carrito, en euros (se multiplica × 100 para Stripe)
   cantidad: number;
+  talla: 'XS' | 'S' | 'M' | 'L';
 }
 
 /** Producto tal como viene de MongoDB (para uso futuro) */
@@ -11,7 +12,7 @@ export interface IProductDoc {
   _id: { toString(): string };
   nombre: string;
   precio: number;
-  stock: number;
+  tallas: { XS: number; S: number; M: number; L: number };
 }
 
 /** Respuesta al crear una sesión de Stripe Checkout */
@@ -31,6 +32,7 @@ export interface SessionStatusResponse {
 export interface OrderProduct {
   productId: string;
   quantity: number;
+  talla: string;
 }
 
 /** Datos que componen la orden al recibir el webhook de Stripe */

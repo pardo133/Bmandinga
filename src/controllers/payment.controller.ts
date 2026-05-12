@@ -2,6 +2,9 @@ import type { Request, Response } from 'express';
 import Stripe from 'stripe';
 import { createCheckoutSession, retrieveSessionStatus } from '../services/payment.service.js';
 import type { CheckoutItem, WebhookOrderData, OrderProduct } from '../types/payment.types.js';
+import Product from '../models/product.model.js';
+
+const TALLAS_VALIDAS = ['XS', 'S', 'M', 'L'] as const;
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
 
@@ -29,11 +32,12 @@ export async function createCheckoutSessionHandler(
       (typeof i.id === 'string' || typeof i.id === 'number') &&
       typeof i.nombre === 'string' &&
       typeof i.precio === 'number' && i.precio >= 0 &&
-      typeof i.cantidad === 'number' && Number.isInteger(i.cantidad) && i.cantidad > 0
+      typeof i.cantidad === 'number' && Number.isInteger(i.cantidad) && i.cantidad > 0 &&
+      TALLAS_VALIDAS.includes(i.talla as typeof TALLAS_VALIDAS[number])
   );
   if (!isValid) {
     res.status(400).json({
-      message: 'Cada item debe tener id, nombre, precio (número) y cantidad (entero > 0)',
+      message: 'Cada item debe tener id, nombre, precio (número), cantidad (entero > 0) y talla (XS/S/M/L)',
     });
     return;
   }
@@ -121,7 +125,7 @@ export async function simulatePaymentHandler(
 ): Promise<void> {
   const userId = req.user?.id ?? 'usuario-simulado';
   const { items = [], total = 9.99 } = req.body as {
-    items?: Array<{ id: string | number; quantity: number }>;
+    items?: Array<{ id: string | number; quantity: number; talla?: string }>;
     total?: number;
   };
 
@@ -130,7 +134,7 @@ export async function simulatePaymentHandler(
     client_reference_id: userId,
     amount_total: Math.round(total * 100),
     metadata: {
-      products: items.map((i) => `${i.id}:${i.quantity}`).join(','),
+      products: items.map((i) => `${i.id}:${i.quantity}:${i.talla ?? ''}`).join(','),
     },
     customer_details: { email: 'test@sandbox.local' } as Stripe.Checkout.Session['customer_details'],
   };
@@ -154,8 +158,8 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session): Promis
     .split(',')
     .filter(Boolean)
     .map((entry) => {
-      const [productId, qty] = entry.split(':');
-      return { productId, quantity: Number(qty) };
+      const [productId, qty, talla] = entry.split(':');
+      return { productId, quantity: Number(qty), talla: talla ?? '' };
     });
 
   const orderData: WebhookOrderData = {
@@ -173,6 +177,14 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session): Promis
   console.log(`💶 Total    : ${orderData.total.toFixed(2)} €`);
   console.log(`🛒 Productos: ${JSON.stringify(products)}`);
   console.log('========================================\n');
+
+  // Decrementar stock por talla
+  for (const { productId, quantity, talla } of products) {
+    if (!talla) continue;
+    await Product.findByIdAndUpdate(productId, {
+      $inc: { [`tallas.${talla}`]: -quantity },
+    });
+  }
 
   // Aquí irá la lógica real cuando tengáis el modelo Order:
   // await Order.create({ ...orderData, status: 'completed', createdAt: new Date() });
