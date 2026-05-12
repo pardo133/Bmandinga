@@ -77,14 +77,20 @@ export const deleteProduct = async (req, res) => {
   }
 };
 
-// Extrae tallas del body. Acepta { tallas: { XS:1, S:2 } } o { talla_XS:1, talla_S:2 }
+// Extrae tallas del body. Acepta { tallas: { XS:1, S:2 } }, { tallas: '{"XS":1}' } o { talla_XS:1, talla_S:2 }
 function parseTallas(body) {
-  if (body.tallas && typeof body.tallas === 'object') {
-    const t = {};
-    for (const k of TALLAS_VALIDAS) {
-      if (body.tallas[k] !== undefined) t[k] = Number(body.tallas[k]);
+  if (body.tallas) {
+    let tallas = body.tallas;
+    if (typeof tallas === 'string') {
+      try { tallas = JSON.parse(tallas); } catch { tallas = {}; }
     }
-    return t;
+    if (typeof tallas === 'object') {
+      const t = {};
+      for (const k of TALLAS_VALIDAS) {
+        if (tallas[k] !== undefined) t[k] = Number(tallas[k]);
+      }
+      return t;
+    }
   }
 
   const t = {};
