@@ -1,10 +1,17 @@
 import mongoose from "mongoose";
 
+const tallasSchema = new mongoose.Schema({
+  XS: { type: Number, default: 0 },
+  S:  { type: Number, default: 0 },
+  M:  { type: Number, default: 0 },
+  L:  { type: Number, default: 0 }
+}, { _id: false });
+
 const productSchema = new mongoose.Schema({
   nombre: { type: String, required: true },
   precio: { type: Number, required: true },
   descripcion: { type: String },
-  stock: { type: Number, default: 0 },
+  tallas: { type: tallasSchema, default: () => ({ XS: 0, S: 0, M: 0, L: 0 }) },
   categoria: {
     type: String,
     required: true,
