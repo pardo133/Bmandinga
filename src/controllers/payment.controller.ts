@@ -8,6 +8,9 @@ const TALLAS_VALIDAS = ['XS', 'S', 'M', 'L'] as const;
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
 
+type StripeEvent = ReturnType<typeof stripe.webhooks.constructEvent>;
+type StripeCheckoutSession = Awaited<ReturnType<typeof stripe.checkout.sessions.retrieve>>;
+
 // ─── Checkout session ─────────────────────────────────────────────────────────
 
 export async function createCheckoutSessionHandler(
@@ -96,7 +99,7 @@ export async function webhookHandler(req: Request, res: Response): Promise<void>
     return;
   }
 
-  let event: Stripe.Event;
+  let event: StripeEvent;
   try {
     event = stripe.webhooks.constructEvent(req.body as Buffer, sig, webhookSecret);
   } catch (err) {
@@ -109,7 +112,7 @@ export async function webhookHandler(req: Request, res: Response): Promise<void>
   console.log('✅ [WEBHOOK] Evento verificado:', event.type);
 
   if (event.type === 'checkout.session.completed') {
-    await handleCheckoutCompleted(event.data.object as Stripe.Checkout.Session);
+    await handleCheckoutCompleted(event.data.object as StripeCheckoutSession);
   }
 
   res.status(200).json({ received: true });
@@ -129,17 +132,17 @@ export async function simulatePaymentHandler(
     total?: number;
   };
 
-  const mockSession: Partial<Stripe.Checkout.Session> = {
+  const mockSession: Partial<StripeCheckoutSession> = {
     id: `cs_test_simulado_${Date.now()}`,
     client_reference_id: userId,
     amount_total: Math.round(total * 100),
     metadata: {
       products: items.map((i) => `${i.id}:${i.quantity}:${i.talla ?? ''}`).join(','),
     },
-    customer_details: { email: 'test@sandbox.local' } as Stripe.Checkout.Session['customer_details'],
+    customer_details: { email: 'test@sandbox.local' } as StripeCheckoutSession['customer_details'],
   };
 
-  await handleCheckoutCompleted(mockSession as Stripe.Checkout.Session);
+  await handleCheckoutCompleted(mockSession as StripeCheckoutSession);
 
   res.status(200).json({
     message: 'Pago simulado procesado. Revisa la consola del servidor.',
@@ -149,7 +152,7 @@ export async function simulatePaymentHandler(
 
 // ─── Lógica de negocio compartida ────────────────────────────────────────────
 
-async function handleCheckoutCompleted(session: Stripe.Checkout.Session): Promise<void> {
+async function handleCheckoutCompleted(session: StripeCheckoutSession): Promise<void> {
   const userId = session.client_reference_id ?? 'unknown';
   const email  = session.customer_details?.email ?? 'sin email';
 
@@ -157,7 +160,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session): Promis
   const products: OrderProduct[] = productsRaw
     .split(',')
     .filter(Boolean)
-    .map((entry) => {
+    .map((entry: string) => {
       const [productId, qty, talla] = entry.split(':');
       return { productId, quantity: Number(qty), talla: talla ?? '' };
     });
