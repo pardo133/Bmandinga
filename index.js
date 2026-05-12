@@ -40,3 +40,5 @@ app.use('/api/checkout', checkoutRoutes);
 app.listen(PORT, () => {
   console.log(`Servidor en http://localhost:${PORT}`);
 });
+
+export default app;
