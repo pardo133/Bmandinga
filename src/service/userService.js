@@ -43,6 +43,7 @@ export const loginService = async ({ correo, password }) => {
                 nombre:   userFound.nombre,
                 apellido: userFound.apellido,
                 correo:   userFound.correo,
+                role:     userFound.role,
             },
         };
     } catch (error) {

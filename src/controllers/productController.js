@@ -18,3 +18,29 @@ export const createProduct = async (req, res) => {
     res.status(400).json({ mensaje: "Error al crear producto" });
   }
 };
+
+export const updateProduct = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updated = await Product.findByIdAndUpdate(id, req.body, { new: true, runValidators: true });
+    if (!updated) {
+      return res.status(404).json({ mensaje: "Producto no encontrado" });
+    }
+    res.status(200).json({ mensaje: "Producto actualizado", producto: updated });
+  } catch (error) {
+    res.status(400).json({ mensaje: "Error al actualizar producto" });
+  }
+};
+
+export const deleteProduct = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const deleted = await Product.findByIdAndDelete(id);
+    if (!deleted) {
+      return res.status(404).json({ mensaje: "Producto no encontrado" });
+    }
+    res.status(200).json({ mensaje: "Producto eliminado con éxito" });
+  } catch (error) {
+    res.status(500).json({ mensaje: "Error al eliminar producto" });
+  }
+};
