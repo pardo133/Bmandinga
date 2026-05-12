@@ -56,7 +56,7 @@ export const updateProduct = async (req, res) => {
       updates.tallas = tallasUpdate;
     }
 
-    const producto = await Product.findByIdAndUpdate(id, updates, { new: true, runValidators: true });
+    const producto = await Product.findByIdAndUpdate(id, updates, { returnDocument: 'after', runValidators: true });
     if (!producto) return res.status(404).json({ mensaje: "Producto no encontrado" });
 
     res.status(200).json({ mensaje: "Producto actualizado", producto });

@@ -89,7 +89,7 @@ export const updateProfile = async (userId, updateData) => {
         const updatedUser = await User.findByIdAndUpdate(
             userId,
             { $set: allowedFields },
-            { new: true, runValidators: true }
+            { returnDocument: 'after', runValidators: true }
         );
 
         if (!updatedUser) {
