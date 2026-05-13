@@ -11,7 +11,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
 type StripeEvent = ReturnType<typeof stripe.webhooks.constructEvent>;
 type StripeCheckoutSession = Awaited<ReturnType<typeof stripe.checkout.sessions.retrieve>>;
 
-// ─── Checkout session ─────────────────────────────────────────────────────────
+
 
 export async function createCheckoutSessionHandler(
   req: Request,
@@ -54,7 +54,7 @@ export async function createCheckoutSessionHandler(
   }
 }
 
-// ─── Session status ───────────────────────────────────────────────────────────
+
 
 export async function getSessionStatusHandler(
   req: Request,
@@ -76,10 +76,10 @@ export async function getSessionStatusHandler(
   }
 }
 
-// ─── Webhook real (Stripe → CLI → servidor) ───────────────────────────────────
+
 
 export async function webhookHandler(req: Request, res: Response): Promise<void> {
-  // Este log aparece SIEMPRE si el endpoint es alcanzado
+  
   console.log('\n🔔 [WEBHOOK] Petición recibida:', new Date().toISOString());
 
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
@@ -118,9 +118,7 @@ export async function webhookHandler(req: Request, res: Response): Promise<void>
   res.status(200).json({ received: true });
 }
 
-// ─── Simulación de pago (sandbox) ─────────────────────────────────────────────
-// POST /api/checkout/simulate-payment
-// Dispara la misma lógica que el webhook real sin necesitar la Stripe CLI.
+
 
 export async function simulatePaymentHandler(
   req: Request,
@@ -150,7 +148,7 @@ export async function simulatePaymentHandler(
   });
 }
 
-// ─── Lógica de negocio compartida ────────────────────────────────────────────
+
 
 async function handleCheckoutCompleted(session: StripeCheckoutSession): Promise<void> {
   const userId = session.client_reference_id ?? 'unknown';
@@ -181,7 +179,7 @@ async function handleCheckoutCompleted(session: StripeCheckoutSession): Promise<
   console.log(`🛒 Productos: ${JSON.stringify(products)}`);
   console.log('========================================\n');
 
-  // Decrementar stock por talla
+  
   for (const { productId, quantity, talla } of products) {
     if (!talla) continue;
     await Product.findByIdAndUpdate(productId, {
@@ -189,7 +187,5 @@ async function handleCheckoutCompleted(session: StripeCheckoutSession): Promise<
     });
   }
 
-  // Aquí irá la lógica real cuando tengáis el modelo Order:
-  // await Order.create({ ...orderData, status: 'completed', createdAt: new Date() });
-  // await Cart.deleteOne({ userId });
+
 }

@@ -3,7 +3,7 @@ import { createCheckoutSession, retrieveSessionStatus } from '../services/paymen
 import Product from '../models/product.model.js';
 const TALLAS_VALIDAS = ['XS', 'S', 'M', 'L'];
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-// ─── Checkout session ─────────────────────────────────────────────────────────
+
 export async function createCheckoutSessionHandler(req, res) {
     const userId = req.user?.id;
     if (!userId) {
@@ -35,7 +35,7 @@ export async function createCheckoutSessionHandler(req, res) {
         res.status(500).json({ message });
     }
 }
-// ─── Session status ───────────────────────────────────────────────────────────
+
 export async function getSessionStatusHandler(req, res) {
     const sessionId = req.query['session_id'];
     if (typeof sessionId !== 'string' || !sessionId) {
@@ -51,9 +51,9 @@ export async function getSessionStatusHandler(req, res) {
         res.status(500).json({ message });
     }
 }
-// ─── Webhook real (Stripe → CLI → servidor) ───────────────────────────────────
+
 export async function webhookHandler(req, res) {
-    // Este log aparece SIEMPRE si el endpoint es alcanzado
+    
     console.log('\n🔔 [WEBHOOK] Petición recibida:', new Date().toISOString());
     const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
     if (!webhookSecret) {
@@ -84,9 +84,7 @@ export async function webhookHandler(req, res) {
     }
     res.status(200).json({ received: true });
 }
-// ─── Simulación de pago (sandbox) ─────────────────────────────────────────────
-// POST /api/checkout/simulate-payment
-// Dispara la misma lógica que el webhook real sin necesitar la Stripe CLI.
+
 export async function simulatePaymentHandler(req, res) {
     const userId = req.user?.id ?? 'usuario-simulado';
     const { items = [], total = 9.99 } = req.body;
@@ -105,7 +103,7 @@ export async function simulatePaymentHandler(req, res) {
         sessionId: mockSession.id,
     });
 }
-// ─── Lógica de negocio compartida ────────────────────────────────────────────
+
 async function handleCheckoutCompleted(session) {
     const userId = session.client_reference_id ?? 'unknown';
     const email = session.customer_details?.email ?? 'sin email';
@@ -131,7 +129,7 @@ async function handleCheckoutCompleted(session) {
     console.log(`💶 Total    : ${orderData.total.toFixed(2)} €`);
     console.log(`🛒 Productos: ${JSON.stringify(products)}`);
     console.log('========================================\n');
-    // Decrementar stock por talla
+    
     for (const { productId, quantity, talla } of products) {
         if (!talla)
             continue;
@@ -139,7 +137,5 @@ async function handleCheckoutCompleted(session) {
             $inc: { [`tallas.${talla}`]: -quantity },
         });
     }
-    // Aquí irá la lógica real cuando tengáis el modelo Order:
-    // await Order.create({ ...orderData, status: 'completed', createdAt: new Date() });
-    // await Cart.deleteOne({ userId });
+
 }

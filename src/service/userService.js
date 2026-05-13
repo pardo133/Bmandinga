@@ -13,7 +13,7 @@ export const registerUser = async (userData) => {
 
         return { status: 201, message: "Usuario registrado con éxito" };
     } catch (e) {
-        // correo duplicado → unique constraint
+        
         if (e.code === 11000) {
             return { status: 409, message: "El correo ya está registrado" };
         }
@@ -68,7 +68,7 @@ export const userInfoService = async (userData) => {
     }
 };
 
-/** Emite un nuevo JWT para el usuario identificado por su id (extraído del token actual). */
+
 export const refreshTokenService = async (userId) => {
     try {
         const userFound = await User.findById(userId);
@@ -80,10 +80,10 @@ export const refreshTokenService = async (userId) => {
     }
 };
 
-/** Actualiza los campos de perfil del usuario. El correo nunca se puede cambiar. */
+
 export const updateProfile = async (userId, updateData) => {
     try {
-        // Excluir campos sensibles / inmutables
+       
         const { correo, password, role, _id, ...allowedFields } = updateData;
 
         const updatedUser = await User.findByIdAndUpdate(

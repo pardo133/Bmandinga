@@ -10,7 +10,7 @@ export const getProducts = async (req, res) => {
     const result = products.map(p => {
       const obj = p.toObject();
       if (!isAdmin) {
-        // Clientes solo ven qué tallas tienen stock > 0
+        
         obj.tallasDisponibles = TALLAS_VALIDAS.filter(t => (p.tallas?.[t] ?? 0) > 0);
         delete obj.tallas;
       }
@@ -77,7 +77,7 @@ export const deleteProduct = async (req, res) => {
   }
 };
 
-// Extrae tallas del body. Acepta { tallas: { XS:1, S:2 } }, { tallas: '{"XS":1}' } o { talla_XS:1, talla_S:2 }
+
 function parseTallas(body) {
   if (body.tallas) {
     let tallas = body.tallas;

@@ -9,10 +9,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
 
 const CLIENT_URL = process.env.CLIENT_URL ?? 'http://localhost:5173';
 
-/**
- * Crea una sesión de Stripe Checkout.
- * Usa el precio enviado por el cliente (ya validado en el front al añadir al carrito).
- */
+
 export async function createCheckoutSession(
   items: CheckoutItem[],
   userId: string
@@ -26,7 +23,7 @@ export async function createCheckoutSession(
     quantity: i.cantidad,
   }));
 
-  // Serializar items en metadata: "id:cantidad:talla,..."
+  
   const productsMetadata = items.map((i) => `${i.id}:${i.cantidad}:${i.talla}`).join(',');
 
   const session = await stripe.checkout.sessions.create({
@@ -46,14 +43,14 @@ export async function createCheckoutSession(
   return { url: session.url };
 }
 
-/** Recupera el estado de pago de una sesión de Stripe para la página de éxito */
+
 export async function retrieveSessionStatus(sessionId: string): Promise<SessionStatusResponse> {
   const session = await stripe.checkout.sessions.retrieve(sessionId);
 
   return {
     status:        session.payment_status,
     customerEmail: session.customer_details?.email ?? null,
-    amountTotal:   session.amount_total,   // en céntimos, igual que lo devuelve Stripe
+    amountTotal:   session.amount_total,   
     currency:      session.currency ?? null,
   };
 }

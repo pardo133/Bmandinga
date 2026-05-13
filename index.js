@@ -1,4 +1,4 @@
-import 'dotenv/config'; // debe ser el primer import para que los demás módulos lean process.env
+import 'dotenv/config'; 
 import express from 'express';
 import cors from 'cors';
 import { fileURLToPath } from 'url';
@@ -22,8 +22,7 @@ app.use(cors({
   credentials: true,
 }));
 
-// El webhook de Stripe necesita el body en crudo (Buffer) para verificar la firma.
-// DEBE registrarse antes que express.json(), que consumiría el stream.
+
 app.post(
   '/api/payments/webhook',
   express.raw({ type: 'application/json' }),
