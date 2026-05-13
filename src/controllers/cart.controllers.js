@@ -3,7 +3,7 @@ import Product from "../models/product.model.js";
 const TALLAS_VALIDAS = ['XS', 'S', 'M', 'L'];
 
 export const totalcarrito = async (req, res) => {
-  const { items } = req.body; // [{ id, quantity, talla }]
+  const { items } = req.body; 
 
   if (!Array.isArray(items) || items.length === 0) {
     return res.status(400).json({ mensaje: "items debe ser un array no vacío" });
