@@ -1,10 +1,7 @@
 import Stripe from 'stripe';
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const CLIENT_URL = process.env.CLIENT_URL ?? 'http://localhost:5173';
-/**
- * Crea una sesión de Stripe Checkout.
- * Usa el precio enviado por el cliente (ya validado en el front al añadir al carrito).
- */
+
 export async function createCheckoutSession(items, userId) {
     const lineItems = items.map((i) => ({
         price_data: {
@@ -14,7 +11,7 @@ export async function createCheckoutSession(items, userId) {
         },
         quantity: i.cantidad,
     }));
-    // Serializar items en metadata: "id:cantidad:talla,..."
+    
     const productsMetadata = items.map((i) => `${i.id}:${i.cantidad}:${i.talla}`).join(',');
     const session = await stripe.checkout.sessions.create({
         payment_method_types: ['card'],
